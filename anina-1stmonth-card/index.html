@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>張攸馜 Anina 彌月派對</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700;900&family=Righteous&display=swap" rel="stylesheet">
+    <!-- 更新 Canvas Confetti 版本以增強穩定性 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Fredoka', sans-serif;
+            /* 固定的柔和粉紫漸層背景 */
+            background: linear-gradient(135deg, #f4e8fa 0%, #fae6f0 100%); 
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            color: #5a456b; /* 深紫灰色，讓文字柔和且清晰 */
+        }
+
+        .font-cool {
+            font-family: 'Righteous', cursive;
+        }
+
+        /* 玻璃卡片改為較透白，增加柔和感 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 40px rgba(179, 142, 204, 0.2);
+        }
+
+        /* 橫式長方形相框 */
+        .photo-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 260px;
+            height: 170px;
+            border-radius: 16px;
+            margin: 0 auto;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .photo-wrapper:hover {
+            transform: scale(1.02);
+        }
+
+        .photo-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            background-color: #fff;
+            
+            /* 👇 替換照片看這裡 (1/2)：此處已固定為首頁預覽圖 homepage.jpg */
+            background-image: url('homepage.jpg'); 
+            
+            background-size: cover;
+            background-position: center;
+            border: 4px solid #fff;
+        }
+
+        .enlarge-icon {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(4px);
+        }
+
+        /* 燈箱 (Lightbox) 樣式 */
+        #lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        #lightbox.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #lightbox img {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        #lightbox.active img {
+            transform: scale(1);
+        }
+
+        /* 漂浮動畫保持，讓畫面有一點生命力但不刺眼 */
+        .float { animation: float 6s ease-in-out infinite; }
+        .float-delayed { animation: float 5s ease-in-out infinite; animation-delay: 2s; }
+        .float-fast { animation: float 4s ease-in-out infinite; animation-delay: 1s; }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        /* 柔和版按鈕 */
+        .cool-btn {
+            background: linear-gradient(90deg, #dfa2e6, #f3aad4);
+            color: #fff;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(223, 162, 230, 0.4);
+        }
+        .cool-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(223, 162, 230, 0.6);
+            background: linear-gradient(90deg, #d795df, #ec9bc8);
+        }
+
+        .bg-element {
+            position: absolute;
+            opacity: 0.7;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* 自訂彩帶畫布 */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="min-h-screen w-full flex items-center justify-center p-4 relative">
+
+    <!-- 專用的彩帶畫布，解決特定預覽環境下 getBoundingClientRect 錯誤 -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- 背景柔和漂浮裝飾 -->
+    <div class="bg-element float top-10 left-4 w-16 h-16 sm:w-24 sm:h-24">
+        <!-- 柔和棒棒糖 SVG -->
+        <svg viewBox="0 0 100 100" class="drop-shadow-sm">
+            <defs>
+                <linearGradient id="softGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#f8cce8;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#dfbcf0;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <rect x="46" y="50" width="8" height="45" rx="4" fill="#ffffff" opacity="0.9"/>
+            <circle cx="50" cy="50" r="40" fill="#ffffff"/>
+            <path d="M50,10 C72,10 90,28 90,50 C90,72 72,90 50,90 C28,90 10,72 10,50 C10,28 28,10 50,10 Z M50,20 C33.4,20 20,33.4 20,50 C20,66.6 33.4,80 50,80 C66.6,80 80,50 C80,33.4 66.6,20 50,20 Z M50,30 C61,30 70,39 70,50 C70,61 61,70 50,70 C39,70 30,61 30,50 C30,39 39,30 50,30 Z" fill="url(#softGrad)"/>
+        </svg>
+    </div>
+
+    <!-- 酷小孩星星點綴 (調淡透明度) -->
+    <div class="bg-element float-fast top-1/4 right-8 text-4xl opacity-50">😎</div>
+    <div class="bg-element float bottom-1/4 left-6 text-4xl opacity-60">✨</div>
+    <div class="bg-element float-delayed top-3/4 right-1/4 text-3xl opacity-60">🍭</div>
+
+    <!-- 主卡片內容 -->
+    <div class="glass-card w-full max-w-sm sm:max-w-md rounded-3xl p-8 z-10 text-center relative">
+        
+        <!-- 卡片頂部小字 -->
+        <div class="text-xs font-bold tracking-widest uppercase text-purple-400 mb-6">
+            🙌🏿 Cutest Baby In Da House 🙌🏿
+        </div>
+
+        <!-- 👇 替換照片看這裡 (2/2)：改為觸發隨機照片的函式 -->
+        <div class="photo-wrapper mb-6" onclick="openRandomLightbox()">
+            <div class="photo-inner"></div>
+            <!-- 右下角放大提示 -->
+            <div class="absolute bottom-2 right-2 enlarge-icon rounded-full p-1.5 text-purple-600 shadow-sm flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+            </div>
+        </div>
+            <p class="text-xs sm:text-sm text-purple-400">點擊照片可以看到更多の我</p>
+        <!-- 名字與生日 -->
+        <h1 class="text-4xl sm:text-5xl font-black mb-2 tracking-wider text-purple-300">
+            🫶🏿張攸馜🫶🏿
+        </h1>
+        <h2 class="font-cool text-2xl sm:text-3xl mb-5 text-pink-400 opacity-90">
+            👶🏿ANINA👶🏿
+        </h2>
+        
+        <div class="inline-block bg-purple-50 rounded-full px-5 py-1.5 mb-6 border border-purple-100 text-purple-600">
+            <p class="text-sm sm:text-base font-bold tracking-widest">
+                BDAY: 2026.03.26
+            </p>
+        </div>
+
+        <!-- 滿月宣言 -->
+        <div class="text-base font-medium leading-relaxed mb-8 px-2 space-y-1">
+            <p>我滿月啦！準備好陪著我</p>
+            <p>一起在這個世界自由探索了嗎？</p>
+            <p class="mt-4 text-xs sm:text-sm text-purple-400">謝謝大家的愛與祝福！</p>
+            <p class="text-xs sm:text-sm text-purple-400">吃塊甜甜的蛋糕，Stay Cool！😎🍭</p>
+        </div>
+
+        <!-- 互動按鈕 -->
+        <button onclick="fireParty()" class="cool-btn w-full rounded-full py-3.5 text-base font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+            <span>Tap to Party</span>
+            <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </button>
+    </div> <!-- 卡片主要內容區塊結束 -->
+
+    <!-- 燈箱 (Lightbox) 區域 -->
+    <div id="lightbox" onclick="closeLightbox()">
+        <!-- 右上角關閉按鈕 -->
+        <div class="absolute top-4 right-4 sm:top-8 sm:right-8 text-white cursor-pointer p-2 opacity-80 hover:opacity-100">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+        <img id="lightbox-img" src="" alt="Anina 的驚喜照片" onclick="event.stopPropagation();">
+    </div>
+
+    <script>
+        // 設定專屬的 canvas，避免在沙盒或 iframe 環境下套件找不到正確的繪製對象導致錯誤
+        var canvasEl = document.getElementById('confetti-canvas');
+        var customConfetti = confetti.create(canvasEl, {
+            resize: true,
+            // 修改：關閉 Worker 模式，避免沙盒環境下 OffscreenCanvas 產生 getBoundingClientRect 錯誤
+            useWorker: false 
+        });
+
+        // 隨機照片燈箱控制邏輯
+        function openRandomLightbox() {
+            // 定義隨機照片的陣列
+            const randomImages = ['random-1.jpg', 'random-2.jpg', 'random-3.jpg'];
+            
+            // 隨機產生 0, 1, 或 2 的索引值
+            const randomIndex = Math.floor(Math.random() * randomImages.length);
+            
+            // 取得對應的照片網址
+            const selectedImage = randomImages[randomIndex];
+
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            
+            // 將選取的隨機照片設定給燈箱圖片
+            lightboxImg.src = selectedImage;
+            lightbox.classList.add('active');
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('lightbox-img').src = '';
+            }, 300);
+        }
+
+        // 慶祝彩帶動畫邏輯
+        function fireParty() {
+            var duration = 2.5 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 25, spread: 360, ticks: 60 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 40 * (timeLeft / duration);
+                
+                var colors = ['#dfa2e6', '#f3aad4', '#f8cce8', '#dfbcf0', '#ffffff'];
+
+                customConfetti(Object.assign({}, defaults, { 
+                    particleCount: particleCount,
+                    colors: colors,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } 
+                }));
+                customConfetti(Object.assign({}, defaults, { 
+                    particleCount: particleCount,
+                    colors: colors,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } 
+                }));
+            }, 250);
+
+            // 按鈕點擊後回饋
+            const btn = document.querySelector('.cool-btn');
+            btn.innerHTML = '<span>Party On! 🤘</span>';
+            setTimeout(() => {
+                btn.innerHTML = '<span>Tap to Party</span><svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            }, 2500);
+        }
+
+        // 進場時噴發柔和的小彩帶
+        window.onload = function() {
+            setTimeout(() => {
+                customConfetti({
+                    particleCount: 80,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#dfa2e6', '#f3aad4', '#f8cce8']
+                });
+            }, 500);
+        };
+    </script>
+</body>
+</html>
